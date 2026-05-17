@@ -52,6 +52,12 @@ try {
   // column probably exists
 }
 
+try {
+  db.exec("ALTER TABLE employees ADD COLUMN avatar TEXT;");
+} catch (e) {
+  // column probably exists
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -189,17 +195,41 @@ async function startServer() {
 
   // Add an employee
   app.post("/api/employees", (req, res) => {
-    const { name, job_title, color_index } = req.body;
+    const { name, job_title, color_index, avatar } = req.body;
     if (!name || !job_title) {
       return res.status(400).json({ error: "Name and job title are required" });
     }
     try {
-      const stmt = db.prepare("INSERT INTO employees (name, job_title, color_index) VALUES (?, ?, ?)");
-      const info = stmt.run(name, job_title, color_index || 0);
-      res.json({ id: info.lastInsertRowid, name, job_title, color_index: color_index || 0 });
+      const stmt = db.prepare("INSERT INTO employees (name, job_title, color_index, avatar) VALUES (?, ?, ?, ?)");
+      const info = stmt.run(name, job_title, color_index || 0, avatar || null);
+      res.json({ id: info.lastInsertRowid, name, job_title, color_index: color_index || 0, avatar: avatar || null });
     } catch (error) {
       console.error("Error adding employee:", error);
       res.status(500).json({ error: "Failed to add employee" });
+    }
+  });
+
+  // Update an employee
+  app.put("/api/employees/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, job_title, color_index, avatar } = req.body;
+    if (!name || !job_title) {
+      return res.status(400).json({ error: "Name and job title are required" });
+    }
+    try {
+      const stmt = db.prepare(`
+        UPDATE employees 
+        SET name = ?, job_title = ?, color_index = ?, avatar = ? 
+        WHERE id = ?
+      `);
+      const result = stmt.run(name, job_title, color_index || 0, avatar !== undefined ? avatar : null, id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: "Employee not found" });
+      }
+      res.json({ id: Number(id), name, job_title, color_index: color_index || 0, avatar });
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      res.status(500).json({ error: "Failed to update employee" });
     }
   });
 
@@ -232,7 +262,8 @@ async function startServer() {
           e.id as employee_id, 
           e.name, 
           e.job_title,
-          e.color_index
+          e.color_index,
+          e.avatar
         FROM employees e
         LEFT JOIN statuses s ON e.id = s.employee_id AND s.date = ?
       `);
@@ -242,6 +273,7 @@ async function startServer() {
       console.error("Error fetching statuses:", error);
       res.status(500).json({ error: "Failed to fetch statuses" });
     }
+
   });
 
   // Upsert a status

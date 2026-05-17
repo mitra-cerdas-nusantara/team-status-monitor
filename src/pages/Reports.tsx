@@ -112,7 +112,7 @@ export default function Reports() {
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as PeriodType)}
-          className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none"
+          className="bg-white border border-gray-100 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 outline-none"
         >
           <option value="today">Today</option>
           <option value="this_week">This Week</option>
@@ -127,7 +127,7 @@ export default function Reports() {
       ) : (
         <>
           {totalEntries === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border p-12 text-center text-gray-500">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-500">
               No status data recorded for the selected period.
             </div>
           ) : (
@@ -135,7 +135,7 @@ export default function Reports() {
               {statCards.map((stat, idx) => {
                 const Icon = stat.icon;
                 return (
-                  <div key={idx} className="bg-white rounded-xl shadow-sm border p-5 flex items-center justify-between">
+                  <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500 mb-1">{stat.title}</p>
                       <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
@@ -150,7 +150,7 @@ export default function Reports() {
           )}
 
           {data.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Availability Trend</h2>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -184,7 +184,7 @@ export default function Reports() {
           )}
 
           {teamData.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-6">Summary by Team Member</h2>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">

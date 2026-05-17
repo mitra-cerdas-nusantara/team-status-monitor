@@ -28,7 +28,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Mobile Top Header */}
-      <div className="md:hidden flex items-center justify-between p-3.5 bg-white border-b sticky top-0 z-20 shadow-sm">
+      <div className="md:hidden flex items-center justify-between p-3.5 bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
         <Link to="/" className="flex items-center gap-2.5">
           {logoMark}
           <span className="font-bold text-lg text-gray-900 tracking-tight truncate max-w-[150px]">
@@ -59,7 +59,7 @@ export default function Layout() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col w-64 bg-white border-r sticky top-0 h-screen shrink-0 z-10">
+      <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 sticky top-0 h-screen shrink-0 z-10">
         <div className="p-6">
           <Link to="/" className="flex items-center gap-3">
             {logoMark}
@@ -103,7 +103,7 @@ export default function Layout() {
         </nav>
         
         {/* Privilege Control Center Card */}
-        <div className="mt-auto p-4 border-t border-gray-150 bg-gray-50/50">
+        <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <div className={cn(
@@ -143,7 +143,7 @@ export default function Layout() {
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-150 px-4 py-2.5 flex items-center justify-around z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 py-2.5 flex items-center justify-around z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] pb-safe">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
