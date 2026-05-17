@@ -1,0 +1,6 @@
+{
+  "name": "Employee Status Monitor",
+  "description": "Daily active employee monitoring with dashboard, settings, and reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
