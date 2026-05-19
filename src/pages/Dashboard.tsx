@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { format, subDays, addDays } from "date-fns";
-import { ChevronLeft, ChevronRight, CheckCircle2, User, Briefcase, ChevronDown, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, User, Briefcase, ChevronDown, Lock, Thermometer } from "lucide-react";
 import { cn } from "../lib/utils";
 import { PALETTE } from "../lib/palette";
 import { useSettings } from "../context/SettingsContext";
@@ -62,11 +62,19 @@ function EmployeeCard({
   const currentConfig = currentStatus ? statusConfig[currentStatus] : null;
 
   const isLocked = isNotToday && !isSuperAdmin;
+  const isLessAppeared = currentStatus === "Sick" || currentStatus === "Leave" || currentStatus === "Off Day";
 
   return (
     <div
-      className="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-center min-h-[96px] transition-colors border relative"
-      style={{ borderColor: isHovered ? colors.hoverBorder : colors.border }}
+      className={cn(
+        "p-5 rounded-xl shadow-sm flex flex-col justify-center min-h-[96px] transition-all duration-300 border relative",
+        isLessAppeared
+          ? "bg-gray-50/60 border-gray-200/60 opacity-55 grayscale-[35%]"
+          : "bg-white"
+      )}
+      style={{
+        borderColor: isLessAppeared ? undefined : (isHovered ? colors.hoverBorder : colors.border)
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -107,11 +115,22 @@ function EmployeeCard({
               "px-4 py-2 rounded-full text-2xl font-extrabold border flex items-center gap-2.5 transition-all shadow-sm select-none",
               isLocked ? "cursor-not-allowed opacity-60 border-gray-200" : "cursor-pointer",
               currentStatus && currentConfig
-                ? `${currentConfig.bg} ${currentConfig.text} border-transparent ring-1 ring-inset ${currentConfig.ring} ${!isLocked ? "hover:opacity-90" : ""}`
+                ? `${currentConfig.bg} ${currentConfig.text} border-transparent ring-1 ring-inset ${currentConfig.ring} ${!isLocked ? "hover:opacity-90" : ""} ${currentStatus === "Work" ? "animate-work-glow-breath" : ""}`
                 : `bg-gray-50 text-gray-500 border-gray-100 ${!isLocked ? "hover:bg-gray-100 hover:text-gray-700" : ""}`
             )}
           >
-            <span>{currentStatus || "Set Status"}</span>
+            <span className="flex items-center gap-2">
+              {currentStatus === "Work" && (
+                <span className="relative flex h-2.5 w-2.5 mr-0.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 animate-work-pulse-ring opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600 animate-work-pulse-dot" />
+                </span>
+              )}
+              {currentStatus === "Sick" && (
+                <Thermometer size={20} className="text-rose-600 animate-pulse mr-0.5 shrink-0" />
+              )}
+              <span>{currentStatus || "Set Status"}</span>
+            </span>
             {isLocked ? (
               <Lock size={16} className="text-gray-400 shrink-0" />
             ) : (
@@ -153,7 +172,10 @@ function EmployeeCard({
                       isSelected ? `${config.text} bg-gray-50/50` : "text-gray-700"
                     )}
                   >
-                    <span>{status}</span>
+                    <span className="flex items-center gap-2">
+                      {status === "Sick" && <Thermometer size={16} className="text-rose-600 shrink-0" />}
+                      <span>{status}</span>
+                    </span>
                     {isSelected && <CheckCircle2 size={16} className="shrink-0" />}
                   </button>
                 );

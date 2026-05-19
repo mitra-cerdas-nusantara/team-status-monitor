@@ -1,1 +1,60 @@
 @import "tailwindcss";
+
+@keyframes work-pulse-ring {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes work-pulse-dot {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes work-glow-breath {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.2), inset 0 0 2px rgba(16, 185, 129, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.55), inset 0 0 6px rgba(16, 185, 129, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes work-avatar-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.45);
+  }
+}
+
+.animate-work-pulse-ring {
+  animation: work-pulse-ring 2.2s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+
+.animate-work-pulse-dot {
+  animation: work-pulse-dot 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-work-glow-breath {
+  animation: work-glow-breath 2.5s ease-in-out infinite;
+}
+
+.animate-work-avatar-pulse {
+  animation: work-avatar-pulse 2.5s cubic-bezier(0.25, 0, 0, 1) infinite;
+}
+
