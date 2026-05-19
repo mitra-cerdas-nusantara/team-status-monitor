@@ -456,8 +456,11 @@ async function startServer() {
     }
   });
 
-  // Serve static uploaded files
-  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+  // Serve static uploaded files with permanent browser cache-control (1 year)
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads"), {
+    maxAge: "1y",
+    immutable: true
+  }));
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
