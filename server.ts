@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import fs from "fs";
+import compression from "compression";
 
 // Initialize SQLite database
 const dbDir = path.join(process.cwd(), "data");
@@ -61,6 +62,9 @@ try {
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Enable gzip/deflate compression for all static assets and API payloads
+  app.use(compression());
 
   // Set body limit higher to allow base64 logo image uploads
   app.use(express.json({ limit: "5mb" }));

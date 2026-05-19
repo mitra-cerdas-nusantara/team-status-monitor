@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, subDays, addDays } from "date-fns";
 import { ChevronLeft, ChevronRight, CheckCircle2, User, Briefcase, ChevronDown, Lock } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -39,6 +39,20 @@ function EmployeeCard({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleDropdownToggle = () => {
+    if (isLocked) return;
+
+    if (!isDropdownOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // If the space below is less than 240px, display the options upward
+      setOpenUpward(spaceBelow < 240);
+    }
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   // Use assigned color_index
   const index = Math.max(0, Math.min(PALETTE.length - 1, emp.color_index || 0));
@@ -85,7 +99,8 @@ function EmployeeCard({
         {/* Right side: Status Dropdown Pill */}
         <div className="relative shrink-0">
           <button
-            onClick={() => !isLocked && setIsDropdownOpen(!isDropdownOpen)}
+            ref={buttonRef}
+            onClick={handleDropdownToggle}
             disabled={isLocked}
             title={isLocked ? "Past and future date status changes require Superadmin passcode" : undefined}
             className={cn(
@@ -114,7 +129,12 @@ function EmployeeCard({
 
           {/* Dropdown Options Box */}
           {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className={cn(
+              "absolute right-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1.5 overflow-hidden animate-in fade-in duration-150",
+              openUpward 
+                ? "bottom-full mb-2 slide-in-from-bottom-2" 
+                : "top-full mt-2 slide-in-from-top-2"
+            )}>
               <div className="px-3.5 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">
                 Select Status
               </div>
