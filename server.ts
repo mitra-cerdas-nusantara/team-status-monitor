@@ -13,6 +13,51 @@ if (!fs.existsSync(dbDir)) {
 const dbPath = path.join(dbDir, "database.sqlite");
 const db = new Database(dbPath);
 
+// Initialize Uploads directory for static images
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Helper to decode Base64 image and save it as a local file
+function saveBase64Image(base64Data: string | null | undefined, prefix: string): string | null {
+  if (!base64Data) return null;
+  
+  // If already uploaded (starts with upload URL), keep it as-is
+  if (base64Data.startsWith("/uploads/")) {
+    return base64Data;
+  }
+  
+  // Verify it is a valid base64 data url
+  const matches = base64Data.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    return null;
+  }
+  
+  const ext = matches[1] === "svg+xml" ? "svg" : matches[1];
+  const data = matches[2];
+  const buffer = Buffer.from(data, "base64");
+  
+  const filename = `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${ext}`;
+  const filePath = path.join(uploadsDir, filename);
+  
+  fs.writeFileSync(filePath, buffer);
+  return `/uploads/${filename}`;
+}
+
+// Helper to migrate legacy base64 images from the database to physical files on the fly
+function migrateLegacyAvatar(emp: any): any {
+  if (emp && emp.avatar && emp.avatar.startsWith("data:image/")) {
+    const savedPath = saveBase64Image(emp.avatar, "avatar");
+    if (savedPath) {
+      const empId = emp.id || emp.employee_id;
+      db.prepare("UPDATE employees SET avatar = ? WHERE id = ?").run(savedPath, empId);
+      return { ...emp, avatar: savedPath };
+    }
+  }
+  return emp;
+}
+
 // Enable WAL mode for better concurrency
 db.pragma("journal_mode = WAL");
 
@@ -83,11 +128,21 @@ async function startServer() {
         settings[row.key] = row.value;
       });
 
+      // Self-heal and migrate legacy base64 logo if found
+      let logo = settings.app_logo || "";
+      if (logo && logo.startsWith("data:image/")) {
+        const savedPath = saveBase64Image(logo, "logo");
+        if (savedPath) {
+          db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('app_logo', ?)").run(savedPath);
+          logo = savedPath;
+        }
+      }
+
       // Provide defaults if they are empty
       const finalSettings = {
         app_name: settings.app_name || "EmpMonitor",
         app_title: settings.app_title || "Employee Status Monitor",
-        app_logo: settings.app_logo || "",
+        app_logo: logo,
         is_setup_required: settings.admin_passcode === "" || !settings.admin_passcode,
       };
 
@@ -174,10 +229,15 @@ async function startServer() {
       
       if (app_name !== undefined) stmt.run("app_name", app_name);
       if (app_title !== undefined) stmt.run("app_title", app_title);
-      if (app_logo !== undefined) stmt.run("app_logo", app_logo);
+      
+      let finalLogo = app_logo;
+      if (app_logo !== undefined) {
+        finalLogo = saveBase64Image(app_logo, "logo") || "";
+        stmt.run("app_logo", finalLogo);
+      }
       
       db.prepare("COMMIT").run();
-      res.json({ success: true, app_name, app_title, app_logo });
+      res.json({ success: true, app_name, app_title, app_logo: finalLogo });
     } catch (error) {
       db.prepare("ROLLBACK").run();
       console.error("Error updating settings:", error);
@@ -189,8 +249,9 @@ async function startServer() {
   app.get("/api/employees", (req, res) => {
     try {
       const stmt = db.prepare("SELECT * FROM employees ORDER BY name ASC");
-      const employees = stmt.all();
-      res.json(employees);
+      const employees = stmt.all() as any[];
+      const migratedEmployees = employees.map(emp => migrateLegacyAvatar(emp));
+      res.json(migratedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       res.status(500).json({ error: "Failed to fetch employees" });
@@ -204,9 +265,10 @@ async function startServer() {
       return res.status(400).json({ error: "Name and job title are required" });
     }
     try {
+      const savedAvatar = saveBase64Image(avatar, "avatar");
       const stmt = db.prepare("INSERT INTO employees (name, job_title, color_index, avatar) VALUES (?, ?, ?, ?)");
-      const info = stmt.run(name, job_title, color_index || 0, avatar || null);
-      res.json({ id: info.lastInsertRowid, name, job_title, color_index: color_index || 0, avatar: avatar || null });
+      const info = stmt.run(name, job_title, color_index || 0, savedAvatar || null);
+      res.json({ id: info.lastInsertRowid, name, job_title, color_index: color_index || 0, avatar: savedAvatar || null });
     } catch (error) {
       console.error("Error adding employee:", error);
       res.status(500).json({ error: "Failed to add employee" });
@@ -221,16 +283,17 @@ async function startServer() {
       return res.status(400).json({ error: "Name and job title are required" });
     }
     try {
+      const savedAvatar = saveBase64Image(avatar, "avatar");
       const stmt = db.prepare(`
         UPDATE employees 
         SET name = ?, job_title = ?, color_index = ?, avatar = ? 
         WHERE id = ?
       `);
-      const result = stmt.run(name, job_title, color_index || 0, avatar !== undefined ? avatar : null, id);
+      const result = stmt.run(name, job_title, color_index || 0, savedAvatar !== undefined ? savedAvatar : null, id);
       if (result.changes === 0) {
         return res.status(404).json({ error: "Employee not found" });
       }
-      res.json({ id: Number(id), name, job_title, color_index: color_index || 0, avatar });
+      res.json({ id: Number(id), name, job_title, color_index: color_index || 0, avatar: savedAvatar });
     } catch (error) {
       console.error("Error updating employee:", error);
       res.status(500).json({ error: "Failed to update employee" });
@@ -271,8 +334,9 @@ async function startServer() {
         FROM employees e
         LEFT JOIN statuses s ON e.id = s.employee_id AND s.date = ?
       `);
-      const statuses = stmt.all(date);
-      res.json(statuses);
+      const statuses = stmt.all(date) as any[];
+      const migratedStatuses = statuses.map(status => migrateLegacyAvatar(status));
+      res.json(migratedStatuses);
     } catch (error) {
       console.error("Error fetching statuses:", error);
       res.status(500).json({ error: "Failed to fetch statuses" });
@@ -391,6 +455,9 @@ async function startServer() {
       res.status(500).json({ error: "Failed to fetch team analytics" });
     }
   });
+
+  // Serve static uploaded files
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
