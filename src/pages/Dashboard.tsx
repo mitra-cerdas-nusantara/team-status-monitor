@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { format, subDays, addDays } from "date-fns";
-import { ChevronLeft, ChevronRight, CheckCircle2, User, Briefcase, ChevronDown, Lock, Thermometer } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, User, Briefcase, ChevronDown, Lock, Thermometer, Calendar, Coffee } from "lucide-react";
 import { cn } from "../lib/utils";
 import { PALETTE } from "../lib/palette";
 import { useSettings } from "../context/SettingsContext";
@@ -66,11 +66,13 @@ function EmployeeCard({
 
   return (
     <div
-      className={cn(
+        className={cn(
         "p-5 rounded-xl shadow-sm flex flex-col justify-center min-h-[96px] transition-all duration-300 border relative",
         isLessAppeared
-          ? "bg-gray-50/60 border-gray-200/60 opacity-55 grayscale-[35%]"
-          : "bg-white"
+          ? "bg-gray-50/60 border-gray-200/60"
+          : "bg-white",
+        isLessAppeared && !isDropdownOpen ? "opacity-55 grayscale-[35%]" : "opacity-100 grayscale-0",
+        isDropdownOpen ? "z-30" : "z-0"
       )}
       style={{
         borderColor: isLessAppeared ? undefined : (isHovered ? colors.hoverBorder : colors.border)
@@ -141,7 +143,7 @@ function EmployeeCard({
           {/* Click outside backdrop */}
           {isDropdownOpen && (
             <div
-              className="fixed inset-0 z-10 cursor-default"
+              className="fixed inset-0 z-30 cursor-default"
               onClick={() => setIsDropdownOpen(false)}
             />
           )}
@@ -149,7 +151,7 @@ function EmployeeCard({
           {/* Dropdown Options Box */}
           {isDropdownOpen && (
             <div className={cn(
-              "absolute right-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1.5 overflow-hidden animate-in fade-in duration-150",
+              "absolute right-0 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-40 py-1.5 overflow-hidden animate-in fade-in duration-150",
               openUpward 
                 ? "bottom-full mb-2 slide-in-from-bottom-2" 
                 : "top-full mt-2 slide-in-from-top-2"
@@ -172,10 +174,7 @@ function EmployeeCard({
                       isSelected ? `${config.text} bg-gray-50/50` : "text-gray-700"
                     )}
                   >
-                    <span className="flex items-center gap-2">
-                      {status === "Sick" && <Thermometer size={16} className="text-rose-600 shrink-0" />}
-                      <span>{status}</span>
-                    </span>
+                    <span>{status}</span>
                     {isSelected && <CheckCircle2 size={16} className="shrink-0" />}
                   </button>
                 );
@@ -250,8 +249,8 @@ export default function Dashboard() {
           >
             <ChevronLeft size={18} className="text-gray-600" />
           </button>
-          <div className="w-32 text-center font-medium text-sm text-gray-700">
-            {format(date, "MMM dd, yyyy")}
+          <div className="w-48 text-center font-medium text-sm text-gray-700">
+            {format(date, "EEEE, MMM dd, yyyy")}
           </div>
           <button
             onClick={() => setDate(d => addDays(d, 1))}
@@ -261,6 +260,47 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Status Counters Grid */}
+      {!loading && employees.length > 0 && (
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-4">
+          {(["Work", "Sick", "Leave", "Off Day"] as StatusType[]).map((status) => {
+            const count = employees.filter(e => e.status === status).length;
+            const config = statusConfig[status];
+            return (
+              <div
+                key={status}
+                className={cn(
+                  "p-2 sm:p-4 rounded-xl border border-gray-100 bg-white shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md",
+                  status === "Work" && "hover:border-emerald-300",
+                  status === "Sick" && "hover:border-rose-300",
+                  status === "Leave" && "hover:border-amber-300",
+                  status === "Off Day" && "hover:border-gray-400"
+                )}
+              >
+                <div>
+                  <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">{status}</p>
+                  <p className="text-lg sm:text-3xl font-extrabold text-gray-900 mt-0.5 sm:mt-1 select-none">{count}</p>
+                </div>
+                <div className={cn(
+                  "w-7 h-7 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center font-bold shrink-0 shadow-sm",
+                  config.bg,
+                  config.text,
+                  status === "Work" && "ring-1 ring-emerald-600/20",
+                  status === "Sick" && "ring-1 ring-rose-600/10",
+                  status === "Leave" && "ring-1 ring-amber-600/20",
+                  status === "Off Day" && "ring-1 ring-gray-600/20"
+                )}>
+                  {status === "Work" && <Briefcase size={14} className="sm:w-5 sm:h-5 shrink-0" />}
+                  {status === "Sick" && <Thermometer size={14} className="sm:w-5 sm:h-5 shrink-0" />}
+                  {status === "Leave" && <Calendar size={14} className="sm:w-5 sm:h-5 shrink-0" />}
+                  {status === "Off Day" && <Coffee size={14} className="sm:w-5 sm:h-5 shrink-0" />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {loading ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">Loading...</div>

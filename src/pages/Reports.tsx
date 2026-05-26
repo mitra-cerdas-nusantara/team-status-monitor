@@ -60,16 +60,16 @@ export default function Reports() {
           fetch(`/api/analytics?startDate=${startDate}&endDate=${endDate}`),
           fetch(`/api/analytics/team?startDate=${startDate}&endDate=${endDate}`)
         ]);
-        
+
         const rawData = await res.json();
         const rawTeamData = await teamRes.json();
-        
+
         // Transform dates to readable format for charts
         const formattedData = rawData.map((day: any) => ({
           ...day,
           displayDate: format(parseISO(day.date), "MMM dd")
         }));
-        
+
         setData(formattedData);
         setTeamData(rawTeamData);
 
@@ -134,13 +134,16 @@ export default function Reports() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {statCards.map((stat, idx) => {
                 const Icon = stat.icon;
+                const percentage = totalEntries > 0 ? ((stat.value / totalEntries) * 100).toFixed(1) : "0.0";
                 return (
-                  <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
+                  <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between animate-in fade-in duration-300">
                     <div>
                       <p className="text-sm font-medium text-gray-500 mb-1">{stat.title}</p>
-                      <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-2xl font-bold tracking-tight text-gray-900">{percentage}%</p>
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center`}>
+                    <div className={`w-12 h-12 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center shadow-sm`}>
                       <Icon size={24} />
                     </div>
                   </div>
@@ -156,20 +159,20 @@ export default function Reports() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="displayDate" 
+                    <XAxis
+                      dataKey="displayDate"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: '#6B7280', fontSize: 12 }}
                       dy={10}
                     />
-                    <YAxis 
+                    <YAxis
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: '#6B7280', fontSize: 12 }}
                     />
-                    <Tooltip 
-                      cursor={{fill: '#F3F4F6'}}
+                    <Tooltip
+                      cursor={{ fill: '#F3F4F6' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
@@ -190,20 +193,20 @@ export default function Reports() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={teamData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="name" 
+                    <XAxis
+                      dataKey="name"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: '#6B7280', fontSize: 12 }}
                       dy={10}
                     />
-                    <YAxis 
+                    <YAxis
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: '#6B7280', fontSize: 12 }}
                     />
-                    <Tooltip 
-                      cursor={{fill: '#F3F4F6'}}
+                    <Tooltip
+                      cursor={{ fill: '#F3F4F6' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                     <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
