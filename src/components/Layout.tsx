@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Users, LayoutDashboard, BarChart3, Lock, Key } from "lucide-react";
+import { Users, LayoutDashboard, BarChart3, Lock, Key, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useSettings } from "../context/SettingsContext";
 
 export default function Layout() {
   const location = useLocation();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { settings, isSuperAdmin, lockSuperAdmin } = useSettings();
 
   const navItems = [
@@ -59,17 +61,32 @@ export default function Layout() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 sticky top-0 h-screen shrink-0 z-10">
-        <div className="p-6">
-          <Link to="/" className="flex items-center gap-3">
+      <div className={cn(
+        "hidden md:flex flex-col bg-white border-r border-gray-100 sticky top-0 h-screen shrink-0 z-10 transition-all duration-300",
+        sidebarCollapsed ? "w-16" : "w-64"
+      )}>
+        <div className={cn("flex items-center", sidebarCollapsed ? "flex-col p-3 gap-3" : "p-6 justify-between")}>
+          <Link to="/" className={cn("flex items-center", sidebarCollapsed ? "justify-center" : "gap-3")}>
             {logoMark}
-            <span className="font-bold text-xl text-gray-900 tracking-tight truncate max-w-[160px]">
-              {settings.app_name}
-            </span>
+            {!sidebarCollapsed && (
+              <span className="font-bold text-xl text-gray-900 tracking-tight truncate max-w-[160px]">
+                {settings.app_name}
+              </span>
+            )}
           </Link>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={cn(
+              "text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer",
+              sidebarCollapsed ? "p-1.5" : "p-2"
+            )}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={18} />}
+          </button>
         </div>
         
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className={cn("flex-1 space-y-1", sidebarCollapsed ? "px-2" : "px-4")}>
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -79,18 +96,20 @@ export default function Layout() {
               <Link
                 key={item.name}
                 to={item.path}
+                title={sidebarCollapsed ? item.name : undefined}
                 className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all group",
+                  "flex items-center rounded-lg text-sm font-medium transition-all group",
+                  sidebarCollapsed ? "justify-center p-2" : "justify-between px-3 py-2",
                   isActive 
                     ? "bg-indigo-50 text-indigo-700" 
                     : "text-gray-700 hover:bg-gray-100"
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className={cn("flex items-center", sidebarCollapsed ? "" : "gap-3")}>
                   <Icon size={18} className={isActive ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600 transition-colors"} />
-                  <span>{item.name}</span>
+                  {!sidebarCollapsed && <span>{item.name}</span>}
                 </div>
-                {isLockedSetting && (
+                {isLockedSetting && !sidebarCollapsed && (
                   <Lock 
                     size={12} 
                     className="text-amber-600 bg-amber-50 border border-amber-200/50 rounded p-0.5 w-4.5 h-4.5 shrink-0 shadow-sm" 
@@ -102,42 +121,76 @@ export default function Layout() {
           })}
         </nav>
         
-        {/* Privilege Control Center Card */}
-        <div className="mt-auto p-4 border-t border-gray-100 bg-gray-50/50">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-2 h-2 rounded-full shadow-sm shrink-0",
-                isSuperAdmin ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
-              )} />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none">
-                {isSuperAdmin ? "Superadmin Mode" : "Member View"}
-              </span>
-            </div>
-            {isSuperAdmin ? (
-              <button 
-                onClick={lockSuperAdmin}
-                className="text-gray-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-all border border-transparent hover:border-rose-100 cursor-pointer"
-                title="Lock Settings (Return to Member)"
-              >
-                <Lock size={14} />
-              </button>
+        {/* Privilege Control + Toggle */}
+        <div className="mt-auto border-t border-gray-100">
+          <div className={sidebarCollapsed ? "p-3 bg-gray-50/50" : "p-4 bg-gray-50/50"}>
+            {sidebarCollapsed ? (
+              <div className="flex items-center justify-center">
+                <div className={cn(
+                  "w-2 h-2 rounded-full shadow-sm",
+                  isSuperAdmin ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
+                )} />
+              </div>
             ) : (
-              <Link 
-                to="/settings"
-                className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-all border border-transparent hover:border-indigo-100 cursor-pointer"
-                title="Elevate Privileges"
-              >
-                <Key size={14} />
-              </Link>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full shadow-sm shrink-0",
+                    isSuperAdmin ? "bg-emerald-500 animate-pulse" : "bg-gray-400"
+                  )} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none">
+                    {isSuperAdmin ? "Superadmin Mode" : "Member View"}
+                  </span>
+                </div>
+                {isSuperAdmin ? (
+                  <button 
+                    onClick={lockSuperAdmin}
+                    className="text-gray-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-all border border-transparent hover:border-rose-100 cursor-pointer"
+                    title="Lock Settings (Return to Member)"
+                  >
+                    <Lock size={14} />
+                  </button>
+                ) : (
+                  <Link 
+                    to="/settings"
+                    className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-all border border-transparent hover:border-indigo-100 cursor-pointer"
+                    title="Elevate Privileges"
+                  >
+                    <Key size={14} />
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <main className="p-4 md:p-8 max-w-7xl mx-auto pb-24 md:pb-8">
+      <div className="flex-1 flex flex-col overflow-auto">
+        {/* Desktop/Tablet Header */}
+        <div className="hidden md:flex items-center justify-end px-8 py-4 bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
+          {isSuperAdmin ? (
+            <button
+              onClick={lockSuperAdmin}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors shadow-sm cursor-pointer select-none"
+              title="Lock Privileges (Return to Member)"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              Admin
+            </button>
+          ) : (
+            <Link
+              to="/settings"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-50 border border-gray-200/50 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors shadow-sm cursor-pointer select-none"
+              title="Elevate Privileges"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+              Member
+            </Link>
+          )}
+        </div>
+
+        <main className="pt-4 md:p-8 pb-24 md:pb-8">
           <Outlet />
         </main>
       </div>

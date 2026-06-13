@@ -386,7 +386,7 @@ export default function Settings() {
 
   // Render Full Settings panel if Superadmin
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 px-4 md:px-0">
       {/* Header with Switcher Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-6">
         <div>
