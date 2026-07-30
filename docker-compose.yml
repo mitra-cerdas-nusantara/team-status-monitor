@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    container_name: team-status-monitor
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - APP_URL=${APP_URL}
+    volumes:
+      - data:/app/data
+      - uploads:/app/uploads
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.team-status.rule=Host(`${APP_DOMAIN}`)"
+      - "traefik.http.routers.team-status.entrypoints=websecure"
+      - "traefik.http.routers.team-status.tls=true"
+      - "traefik.http.services.team-status.loadbalancer.server.port=3000"
+
+volumes:
+  data:
+  uploads:
+
+networks:
+  proxy:
+    external: true
